@@ -140,8 +140,7 @@ int main(void)
   // Define network architecture
   struct Layers network_architecture[] = {
       {INPUT_DATA_SIZE, NULL, NULL},                         // Input layer: 784 neurons
-      {128, gelu, gelu_derivative},                          // Hidden layer: 128 neurons with ReLU
-      {32, gelu, gelu_derivative},                          // Hidden layer: 128 neurons with ReLU
+      {128, tanh_func, tanh_derivative},                          // Hidden layer: 128 neurons with ReLU
       {OUTPUT_DATA_SIZE, softmax_single, softmax_derivative} // Output layer: 10 neurons with softmax
   };
 
@@ -164,31 +163,34 @@ int main(void)
   struct TrainingParams training_config = {
       .num_samples = TRAIN_SAMPLES,
       .epochs = 50,
-      .learning_rate = 0.001f,
-      .learning_rate_decay = 0.95f,
+      .learning_rate = 0.01f,
+      .learning_rate_decay = 0.99f,
       .print_interval = 1,
       .batch_size = 32,
       .momentum = 0.9f,
-      .min_delta = 0.0001f,
+      .min_delta = 0.001f,
       .early_stop_patience = 5};
 
   // Start training
   clock_t training_start = clock();
   printf("Starting training...\n");
 
-  train_network(network, training_config, input_samples, target_labels, cross_entropy_loss);
+  // Create a copy of the network for training to avoid memory corruption
+  struct Network training_net = network;
+  train_network(training_net, training_config, input_samples, target_labels, cross_entropy_loss);
 
   double training_time = ((double)(clock() - training_start)) / CLOCKS_PER_SEC;
   printf("\nTotal training time: %.2f seconds\n", training_time);
 
-  // Test the network
+  // Test the network with the updated weights
   printf("\nTesting network performance...\n");
-  float accuracy = test_network(network, test_inputs, test_targets, TEST_SAMPLES);
+  float accuracy = test_network(training_net, test_inputs, test_targets, TEST_SAMPLES);
   printf("Test accuracy: %.2f%%\n", accuracy * 100.0f);
 
+  // Sample predictions
   for (int i = 0; i < 20; i++)
   {
-    float *res = get_result(network, test_inputs[i]);
+    float *res = get_result(training_net, test_inputs[i]);
 
     for (int i1 = 0; i1 < 10; i1++)
     {
@@ -202,12 +204,12 @@ int main(void)
       }
     }
 
-    free(res);
+    free(res);  // Properly free the result
   }
 
   // Save the trained weights
   printf("Saving weights...\n");
-  if (!saveWeights(&network, "network_weights.bin"))
+  if (!saveWeights(&training_net, "network_weights.bin"))
   {
     printf("Error saving weights\n");
   }

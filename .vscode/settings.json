@@ -60,6 +60,8 @@
     "*.page-template": "vue",
     "*.layout-template": "vue",
     "*.vue": "vue",
-    "activation_functions.h": "c"
+    "activation_functions.h": "c",
+    "algorithm": "c",
+    "format": "c"
   }
 }

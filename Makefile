@@ -3,7 +3,8 @@ CC = /opt/intel/oneapi/compiler/latest/bin/icx
 #CC = gcc
 
 # Compiler flags
-CFLAGS = -lm
+CFLAGS = -lm -O3 -ffast-math
+#CFLAGS = -lm -Ofast
 
 # Target executable
 TARGET = neural_network
