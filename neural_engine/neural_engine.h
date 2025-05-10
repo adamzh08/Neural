@@ -39,8 +39,8 @@ struct Layers
  * @member size Total number of layers in the network
  * @member weights 3D array of network weights:
  *                - First dimension: layer index
- *                - Second dimension: input neuron index (including bias)
- *                - Third dimension: output neuron index
+ *                - Second dimension: output neuron index
+ *                - Third dimension: input neuron index (including bias)
  */
 struct Network
 {
@@ -72,11 +72,11 @@ struct Network createNetwork(struct Layers layers[], int length)
 
   for (int layer = 0; layer < length - 1; layer++)
   {
-    net.weights[layer] = (float **)malloc((layers[layer].length + 1) * sizeof(float *));
+    net.weights[layer] = (float **)malloc((layers[layer + 1].length) * sizeof(float *));
 
-    for (int input_neuron = 0; input_neuron < layers[layer].length + 1; input_neuron++)
+    for (int input_neuron = 0; input_neuron < layers[layer + 1].length; input_neuron++)
     {
-      net.weights[layer][input_neuron] = (float *)malloc(layers[layer + 1].length * sizeof(float));
+      net.weights[layer][input_neuron] = (float *)malloc((layers[layer].length + 1) * sizeof(float));
     }
   }
 
@@ -116,9 +116,9 @@ int saveWeights(struct Network *net, const char *filename)
 
   for (int layer = 0; layer < net->size - 1; layer++)
   {
-    for (int i = 0; i < net->layers[layer].length + 1; i++)
+    for (int i = 0; i < net->layers[layer + 1].length; i++)
     {
-      fwrite(net->weights[layer][i], sizeof(float), net->layers[layer + 1].length, file);
+      fwrite(net->weights[layer][i], sizeof(float), net->layers[layer].length + 1, file);
     }
   }
   fclose(file);
@@ -142,9 +142,9 @@ int loadWeights(struct Network *net, const char *filename)
 
   for (int layer = 0; layer < net->size - 1; layer++)
   {
-    for (int i = 0; i < net->layers[layer].length + 1; i++)
+    for (int i = 0; i < net->layers[layer + 1].length; i++)
     {
-      fread(net->weights[layer][i], sizeof(float), net->layers[layer + 1].length, file);
+      fread(net->weights[layer][i], sizeof(float), net->layers[layer].length + 1, file);
     }
   }
   fclose(file);
@@ -168,9 +168,9 @@ void randomizeWeights(struct Network *net)
     // Xavier/Glorot initialization
     float scale = sqrtf(2.0f / (net->layers[layer].length + net->layers[layer + 1].length));
 
-    for (int i = 0; i < net->layers[layer].length + 1; i++)
+    for (int i = 0; i < net->layers[layer + 1].length; i++)
     {
-      for (int j = 0; j < net->layers[layer + 1].length; j++)
+      for (int j = 0; j < net->layers[layer].length + 1; j++)
       {
         float r = ((float)rand() / RAND_MAX * 2.0f - 1.0f);
         net->weights[layer][i][j] = r * scale;
@@ -206,19 +206,16 @@ static inline float *get_result(struct Network net, float input[])
     next_layer_activations = (float *)calloc(net.layers[layer_idx + 1].length, sizeof(float));
 
     // Forward propagation
-    for (int input_neuron = 0; input_neuron < net.layers[layer_idx].length; input_neuron++)
-    {
-      for (int output_neuron = 0; output_neuron < net.layers[layer_idx + 1].length; output_neuron++)
-      {
-        next_layer_activations[output_neuron] += current_layer_activations[input_neuron] *
-                                                 net.weights[layer_idx][input_neuron][output_neuron];
-      }
-    }
-
-    // Add bias terms
     for (int output_neuron = 0; output_neuron < net.layers[layer_idx + 1].length; output_neuron++)
     {
-      next_layer_activations[output_neuron] += net.weights[layer_idx][net.layers[layer_idx].length][output_neuron];
+      for (int input_neuron = 0; input_neuron < net.layers[layer_idx].length; input_neuron++)
+      {
+        next_layer_activations[output_neuron] += current_layer_activations[input_neuron] *
+                                                 net.weights[layer_idx][output_neuron][input_neuron];
+      }
+
+      // Add bias terms
+      next_layer_activations[output_neuron] += net.weights[layer_idx][output_neuron][net.layers[layer_idx].length];
     }
 
     // Special handling for softmax in the output layer
@@ -278,7 +275,7 @@ void freeNetwork(struct Network *net)
 {
   for (int layer = 0; layer < net->size - 1; layer++)
   {
-    for (int i = 0; i < net->layers[layer].length + 1; i++)
+    for (int i = 0; i < net->layers[layer + 1].length; i++)
     {
       free(net->weights[layer][i]);
     }

@@ -396,9 +396,9 @@ static inline void train_network(struct Network net, struct TrainingParams param
             float sum = 0.0f;
             for (int i = 0; i < net.layers[layer].length; i++)
             {
-              sum += layer_activations[layer][i] * net.weights[layer][i][j];
+              sum += layer_activations[layer][i] * net.weights[layer][j][i];
             }
-            sum += net.weights[layer][net.layers[layer].length][j]; // Bias
+            sum += net.weights[layer][j][net.layers[layer].length]; // Bias
 
             if (layer == net.size - 2 && net.layers[layer + 1].activation == softmax_single)
             {
@@ -449,15 +449,20 @@ static inline void train_network(struct Network net, struct TrainingParams param
         {
           for (int i = 0; i < net.layers[layer].length; i++)
           {
-            float error_sum = 0.0f;
-            for (int j = 0; j < net.layers[layer + 1].length; j++)
+            layer_errors[layer][i] = 0.0f;
+          }
+          for (int j = 0; j < net.layers[layer + 1].length; j++)
+          {
+            for (int i = 0; i < net.layers[layer].length; i++)
             {
-              error_sum += layer_errors[layer + 1][j] * net.weights[layer][i][j];
+              layer_errors[layer][i] += layer_errors[layer + 1][j] * net.weights[layer][j][i];
             }
-            layer_errors[layer][i] = error_sum;
+          }
 
-            if (layer > 0)
-            { // Skip input layer activation derivative
+          if (layer > 0)
+          { // Skip input layer activation derivative
+            for (int i = 0; i < net.layers[layer].length; i++)
+            {
               layer_errors[layer][i] *= net.layers[layer].activation_derivative(layer_activations[layer][i]);
             }
           }
@@ -488,13 +493,13 @@ static inline void train_network(struct Network net, struct TrainingParams param
       // Apply accumulated updates with momentum
       for (int layer = 0; layer < net.size - 1; layer++)
       {
-        for (int i = 0; i < net.layers[layer].length + 1; i++)
+        for (int j = 0; j < net.layers[layer + 1].length; j++)
         {
-          for (int j = 0; j < net.layers[layer + 1].length; j++)
+          for (int i = 0; i < net.layers[layer].length + 1; i++)
           {
             float update = weight_updates[layer][i][j] / params.batch_size +
                            params.momentum * previous_updates[layer][i][j];
-            net.weights[layer][i][j] += update;
+            net.weights[layer][j][i] += update;
             previous_updates[layer][i][j] = update;
           }
         }
