@@ -3,7 +3,7 @@ CC = /opt/intel/oneapi/compiler/latest/bin/icx
 #CC = gcc
 
 # Compiler flags
-CFLAGS = -lm
+CFLAGS = -lm -O3 -march=native -ffast-math -qopenmp
 
 # Target executable
 TARGET = neural_network
@@ -21,8 +21,8 @@ clean:
 
 # Run the program
 run: $(TARGET)
-	./$(TARGET)
+	LD_PRELOAD=/opt/intel/oneapi/compiler/latest/lib/libiomp5.so ./$(TARGET)
 
 # Do everything
 doit: $(SRCS)
-	rm -f $(TARGET) network_weights.bin && $(CC) -o $(TARGET) $(SRCS) $(CFLAGS) && ./$(TARGET)
+	rm -f $(TARGET) network_weights.bin && $(CC) -o $(TARGET) $(SRCS) $(CFLAGS) && LD_PRELOAD=/opt/intel/oneapi/compiler/latest/lib/libiomp5.so ./$(TARGET)

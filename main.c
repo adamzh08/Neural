@@ -140,8 +140,7 @@ int main(void)
   // Define network architecture
   struct Layers network_architecture[] = {
       {INPUT_DATA_SIZE, NULL, NULL},                         // Input layer: 784 neurons
-      {128, gelu, gelu_derivative},                          // Hidden layer: 128 neurons with ReLU
-      {32, gelu, gelu_derivative},                          // Hidden layer: 128 neurons with ReLU
+      {128, tanh_func, tanh_derivative},                          // Hidden layer: 128 neurons with ReLU
       {OUTPUT_DATA_SIZE, softmax_single, softmax_derivative} // Output layer: 10 neurons with softmax
   };
 
@@ -163,7 +162,7 @@ int main(void)
   // Configure training parameters
   struct TrainingParams training_config = {
       .num_samples = TRAIN_SAMPLES,
-      .epochs = 50,
+      .epochs = 10,
       .learning_rate = 0.001f,
       .learning_rate_decay = 0.95f,
       .print_interval = 1,
@@ -185,25 +184,6 @@ int main(void)
   printf("\nTesting network performance...\n");
   float accuracy = test_network(network, test_inputs, test_targets, TEST_SAMPLES);
   printf("Test accuracy: %.2f%%\n", accuracy * 100.0f);
-
-  for (int i = 0; i < 20; i++)
-  {
-    float *res = get_result(network, test_inputs[i]);
-
-    for (int i1 = 0; i1 < 10; i1++)
-    {
-      if (res[i1] > 0.7)
-      {
-        printf(RED "%d - %d - %f" RESET "\n", test_labels[i], i1, res[i1]);
-      }
-      else
-      {
-        printf("%d - %d - %f\n", test_labels[i], i1, res[i1]);
-      }
-    }
-
-    free(res);
-  }
 
   // Save the trained weights
   printf("Saving weights...\n");
