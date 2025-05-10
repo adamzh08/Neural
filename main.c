@@ -116,7 +116,7 @@ int main(void)
     // Normalize pixel values to [0,1]
     for (int j = 0; j < INPUT_DATA_SIZE; j++)
     {
-      input_samples[i][j] = (float)training_images[i][j] / 255.0f;
+      input_samples[i][j] = (float)training_images[i][j] / 1.0f;
     }
 
     to_one_hot(training_labels[i], target_labels[i]);
@@ -162,7 +162,7 @@ int main(void)
   // Configure training parameters
   struct TrainingParams training_config = {
       .num_samples = TRAIN_SAMPLES,
-      .epochs = 10,
+      .epochs = 50,
       .learning_rate = 0.001f,
       .learning_rate_decay = 0.95f,
       .print_interval = 1,

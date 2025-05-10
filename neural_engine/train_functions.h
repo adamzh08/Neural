@@ -493,9 +493,9 @@ static inline void train_network(struct Network net, struct TrainingParams param
       // Apply accumulated updates with momentum
       for (int layer = 0; layer < net.size - 1; layer++)
       {
-        for (int j = 0; j < net.layers[layer + 1].length; j++)
+        for (int i = 0; i < net.layers[layer].length + 1; i++)
         {
-          for (int i = 0; i < net.layers[layer].length + 1; i++)
+          for (int j = 0; j < net.layers[layer + 1].length; j++)
           {
             float update = weight_updates[layer][i][j] / params.batch_size +
                            params.momentum * previous_updates[layer][i][j];
